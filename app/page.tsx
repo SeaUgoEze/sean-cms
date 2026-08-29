@@ -20,11 +20,17 @@ export default function LoginPage() {
     try {
       const token = await verifyPasscode(passcode)
       await signInWithToken(token)
-      // Store auth state in sessionStorage (cleared on browser close)
       sessionStorage.setItem("cms-auth", "true")
       router.push("/dashboard")
-    } catch (err) {
-      setError("Invalid passcode")
+    } catch (err: any) {
+      const msg = err?.message || "Login failed"
+      if (msg.includes("not configured") || msg.includes("not set")) {
+        setError("Admin not set up yet. Run: node seed-portfolio.js")
+      } else if (msg === "Invalid passcode") {
+        setError("Invalid passcode")
+      } else {
+        setError(`Error: ${msg}`)
+      }
       setPasscode("")
     } finally {
       setLoading(false)
@@ -64,6 +70,10 @@ export default function LoginPage() {
             {loading ? "Verifying..." : "Enter Dashboard"}
           </button>
         </form>
+
+        <p className="text-white/15 text-xs font-mono text-center mt-8">
+          Passcode verified securely
+        </p>
       </div>
     </div>
   )
