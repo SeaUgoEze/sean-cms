@@ -29,11 +29,15 @@ export async function verifyPasscode(passcode: string): Promise<string> {
   // Strategy 1: Try Cloud Function (most secure — passcode never leaves server)
   try {
     const url = `https://us-central1-${projectId}.cloudfunctions.net/verifyPasscode`
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 5000)
     const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ data: { passcode } }),
+      signal: controller.signal,
     })
+    clearTimeout(timeout)
 
     if (response.ok) {
       const result = await response.json()
@@ -51,12 +55,12 @@ export async function verifyPasscode(passcode: string): Promise<string> {
   try {
     const configDoc = await getDoc(doc(db, "config", "admin"))
     if (!configDoc.exists()) {
-      throw new Error("Admin not configured. Run the seed script first.")
+      throw new Error("Firestore not set up. Enable Firestore in Firebase Console, then run: node seed-portfolio.js YOUR_PASSCODE")
     }
 
     const { passcodeHash } = configDoc.data()
     if (!passcodeHash) {
-      throw new Error("Admin passcode not set. Run the setup script.")
+      throw new Error("Admin passcode not set. Run: node seed-portfolio.js YOUR_PASSCODE")
     }
 
     // Dynamic import bcryptjs to keep bundle small
@@ -82,10 +86,14 @@ export async function verifyPasscode(passcode: string): Promise<string> {
 
     return `admin-session:${uid}`
   } catch (err: any) {
-    if (err.message?.includes("not configured") || err.message?.includes("not set")) {
+    if (
+      err.message?.includes("Firestore not set up") ||
+      err.message?.includes("passcode not set") ||
+      err.message?.includes("Invalid passcode")
+    ) {
       throw err
     }
-    throw new Error("Invalid passcode")
+    throw new Error("Could not connect to Firestore. Is the database enabled? Error: " + (err.message || "unknown"))
   }
 }
 
