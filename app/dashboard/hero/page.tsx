@@ -84,11 +84,11 @@ export default function HeroEditor() {
         </div>
 
         <div>
-          <label className="block text-[10px] tracking-[0.2em] uppercase text-white/30 font-mono mb-2">Profile Image URL (optional)</label>
+          <label className="block text-[10px] tracking-[0.2em] uppercase text-white/30 font-mono mb-2">Background Art URL (optional)</label>
           <input
-            value={data.imageUrl}
-            onChange={(e) => setData({ ...data, imageUrl: e.target.value })}
-            placeholder="https://..."
+            value={data.backgroundArt || ""}
+            onChange={(e) => setData({ ...data, backgroundArt: e.target.value })}
+            placeholder="https://... or /art/your-image.jpg — slow-zoom backdrop behind the hero title"
             className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white font-mono text-sm focus:border-white/30 focus:outline-none rounded-lg placeholder:text-white/15"
           />
         </div>

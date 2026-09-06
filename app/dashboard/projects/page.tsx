@@ -5,6 +5,18 @@ import { fetchPortfolioData, savePortfolioSection, type PortfolioData } from "@/
 
 type Project = PortfolioData["projects"][0]
 
+const MAP_REGIONS = [
+  "The North",
+  "The Neck",
+  "The Vale",
+  "The Riverlands",
+  "The Westerlands",
+  "The Crownlands",
+  "The Reach",
+  "The Stormlands",
+  "Dorne",
+] as const
+
 function emptyProject(): Project {
   return {
     id: Date.now().toString(),
@@ -16,6 +28,7 @@ function emptyProject(): Project {
     videoUrl: "",
     githubUrl: "",
     highlights: [],
+    location: { x: 480, y: 700, region: "The Crownlands" },
   }
 }
 
@@ -66,7 +79,7 @@ export default function ProjectsEditor() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="font-mono text-2xl text-white mb-1">Projects</h1>
-          <p className="text-white/40 text-sm font-mono">Manage your project cards with hover effects</p>
+          <p className="text-white/40 text-sm font-mono">Manage your projects — each one is pinned to a region of the map</p>
         </div>
         <div className="flex gap-3">
           <button
@@ -162,6 +175,102 @@ export default function ProjectsEditor() {
                   placeholder="https://github.com/..."
                   className="w-full px-4 py-2.5 bg-white/5 border border-white/10 text-white font-mono text-sm focus:border-white/30 focus:outline-none rounded-lg placeholder:text-white/15"
                 />
+              </div>
+
+              {/* Map location */}
+              <div className="p-4 border border-white/5 rounded-lg bg-white/[0.02]">
+                <label className="block text-[10px] tracking-[0.2em] uppercase text-white/30 font-mono mb-3">Map Location — where this project sits on the realm map</label>
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-[9px] tracking-[0.15em] uppercase text-white/20 font-mono mb-1.5">Region</label>
+                    <select
+                      value={project.location?.region || "The Crownlands"}
+                      onChange={(e) =>
+                        updateProject(project.id, {
+                          location: {
+                            x: project.location?.x ?? 480,
+                            y: project.location?.y ?? 700,
+                            region: e.target.value,
+                          },
+                        })
+                      }
+                      className="w-full px-3 py-2.5 bg-white/5 border border-white/10 text-white font-mono text-sm focus:border-white/30 focus:outline-none rounded-lg"
+                    >
+                      {MAP_REGIONS.map((r) => (
+                        <option key={r} value={r} className="bg-neutral-900">
+                          {r}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[9px] tracking-[0.15em] uppercase text-white/20 font-mono mb-1.5">X (50–950)</label>
+                    <input
+                      type="number"
+                      min={50}
+                      max={950}
+                      value={project.location?.x ?? 480}
+                      onChange={(e) =>
+                        updateProject(project.id, {
+                          location: {
+                            x: Number(e.target.value),
+                            y: project.location?.y ?? 700,
+                            region: project.location?.region || "The Crownlands",
+                          },
+                        })
+                      }
+                      className="w-full px-3 py-2.5 bg-white/5 border border-white/10 text-white font-mono text-sm focus:border-white/30 focus:outline-none rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] tracking-[0.15em] uppercase text-white/20 font-mono mb-1.5">Y (80–1250)</label>
+                    <input
+                      type="number"
+                      min={80}
+                      max={1250}
+                      value={project.location?.y ?? 700}
+                      onChange={(e) =>
+                        updateProject(project.id, {
+                          location: {
+                            x: project.location?.x ?? 480,
+                            y: Number(e.target.value),
+                            region: project.location?.region || "The Crownlands",
+                          },
+                        })
+                      }
+                      className="w-full px-3 py-2.5 bg-white/5 border border-white/10 text-white font-mono text-sm focus:border-white/30 focus:outline-none rounded-lg"
+                    />
+                  </div>
+                </div>
+                {/* Mini map preview */}
+                <div className="relative mt-4 h-40 border border-white/10 rounded overflow-hidden bg-black">
+                  <svg viewBox="0 0 1000 1400" className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid slice">
+                    <path
+                      d="M 420 60 C 500 40, 620 50, 700 90 C 740 120, 730 170, 700 200 C 680 260, 720 300, 700 340 C 690 420, 640 460, 660 520 C 670 580, 620 600, 610 650 C 640 700, 660 740, 640 790 C 620 850, 640 900, 600 940 C 560 990, 480 990, 440 1020 C 400 1060, 420 1120, 380 1150 C 340 1180, 300 1140, 290 1090 C 270 1040, 290 980, 270 930 C 250 880, 280 840, 260 800 C 240 750, 260 700, 240 660 C 220 620, 250 570, 230 530 C 210 480, 250 440, 240 390 C 230 330, 280 300, 300 250 C 320 180, 360 100, 420 60 Z"
+                      fill="#141008"
+                      stroke="rgba(215,152,58,0.4)"
+                      strokeWidth="3"
+                    />
+                    {projects.map((p, pi) => {
+                      const loc = p.location || { x: 480, y: 700 }
+                      const isCurrent = p.id === project.id
+                      return (
+                        <rect
+                          key={p.id}
+                          x={loc.x - (isCurrent ? 14 : 8)}
+                          y={loc.y - (isCurrent ? 14 : 8)}
+                          width={isCurrent ? 28 : 16}
+                          height={isCurrent ? 28 : 16}
+                          transform={`rotate(45 ${loc.x} ${loc.y})`}
+                          fill={isCurrent ? "#d7983a" : "rgba(215,152,58,0.3)"}
+                          stroke="#d7983a"
+                          strokeWidth="2"
+                        />
+                      )
+                    })}
+                  </svg>
+                  <p className="absolute bottom-1 right-2 text-[9px] font-mono text-white/25">Your project is the large gold diamond</p>
+                </div>
               </div>
 
               {/* Languages */}

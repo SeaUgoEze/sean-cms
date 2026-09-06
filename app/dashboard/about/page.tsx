@@ -43,7 +43,7 @@ export default function AboutEditor() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="font-mono text-2xl text-white mb-1">About</h1>
-          <p className="text-white/40 text-sm font-mono">Edit your bio paragraphs and ASCII art</p>
+          <p className="text-white/40 text-sm font-mono">Edit your bio, portrait, and pull quote</p>
         </div>
         <button
           onClick={handleSave}
@@ -86,25 +86,29 @@ export default function AboutEditor() {
           </button>
         </div>
 
-        {/* ASCII Art */}
+        {/* Portrait */}
         <div>
-          <label className="block text-[10px] tracking-[0.2em] uppercase text-white/30 font-mono mb-2">ASCII Art</label>
-          <p className="text-white/20 text-xs font-mono mb-3">Paste your ASCII art below. It will render in monospace font on the site.</p>
-          <textarea
-            value={data.asciiArt}
-            onChange={(e) => setData({ ...data, asciiArt: e.target.value })}
-            rows={15}
-            placeholder="Paste your ASCII art here..."
-            className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white font-mono text-xs focus:border-white/30 focus:outline-none rounded-lg resize-y whitespace-pre"
+          <label className="block text-[10px] tracking-[0.2em] uppercase text-white/30 font-mono mb-2">Portrait URL</label>
+          <input
+            value={data.portraitUrl || ""}
+            onChange={(e) => setData({ ...data, portraitUrl: e.target.value })}
+            placeholder="https://... or /art/portrait.jpg — shown in the gold frame in About"
+            className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white font-mono text-sm focus:border-white/30 focus:outline-none rounded-lg placeholder:text-white/15"
           />
-          {data.asciiArt && (
-            <div className="mt-4 p-4 bg-white/[0.02] border border-white/5 rounded-lg">
-              <p className="text-[10px] tracking-[0.2em] uppercase text-white/20 font-mono mb-2">Preview</p>
-              <pre className="font-mono text-[0.4rem] leading-none text-white/30 whitespace-pre overflow-x-auto">
-                {data.asciiArt}
-              </pre>
-            </div>
+          {data.portraitUrl && (
+            <img src={data.portraitUrl} alt="Portrait preview" className="mt-3 h-40 rounded-lg object-cover border border-white/10" />
           )}
+        </div>
+
+        {/* Pull quote */}
+        <div>
+          <label className="block text-[10px] tracking-[0.2em] uppercase text-white/30 font-mono mb-2">Pull Quote (optional)</label>
+          <input
+            value={data.quote || ""}
+            onChange={(e) => setData({ ...data, quote: e.target.value })}
+            placeholder="A line that captures you — shown after the bio in large italic serif"
+            className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white font-mono text-sm focus:border-white/30 focus:outline-none rounded-lg placeholder:text-white/15"
+          />
         </div>
       </div>
     </div>

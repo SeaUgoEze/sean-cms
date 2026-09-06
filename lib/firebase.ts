@@ -114,11 +114,12 @@ export interface PortfolioData {
     lastName: string
     tagline: string
     pills: string[]
-    imageUrl: string
+    backgroundArt: string
   }
   about: {
     paragraphs: string[]
-    asciiArt: string
+    portraitUrl: string
+    quote: string
   }
   projects: {
     id: string
@@ -130,6 +131,7 @@ export interface PortfolioData {
     videoUrl: string
     githubUrl: string
     highlights: string[]
+    location?: { x: number; y: number; region: string }
   }[]
   experience: {
     id: string
