@@ -109,7 +109,7 @@ export default function ContactEditor() {
 
         <div>
           <label className="block text-[10px] tracking-[0.2em] uppercase text-white/30 font-mono mb-3">Interest Chips</label>
-          {data.chips.map((chip, i) => (
+          {data.chips.map((chip: string, i: number) => (
             <div key={i} className="flex gap-2 mb-2">
               <input
                 value={chip}
@@ -121,7 +121,7 @@ export default function ContactEditor() {
                 className="flex-1 px-4 py-2.5 bg-white/5 border border-white/10 text-white font-mono text-sm focus:border-white/30 focus:outline-none rounded-lg"
               />
               <button
-                onClick={() => setData({ ...data, chips: data.chips.filter((_, j) => j !== i) })}
+                onClick={() => setData({ ...data, chips: data.chips.filter((_: string, j: number) => j !== i) })}
                 className="px-3 py-2.5 text-white/20 hover:text-red-400 transition-colors font-mono text-sm"
               >
                 ×

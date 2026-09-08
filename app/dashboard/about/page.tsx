@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { fetchPortfolioData, savePortfolioSection, type PortfolioData } from "@/lib/firebase"
+import { ImageUpload } from "@/components/image-upload"
 
 export default function AboutEditor() {
   const [data, setData] = useState<PortfolioData["about"] | null>(null)
@@ -87,6 +88,7 @@ export default function AboutEditor() {
         </div>
 
         {/* Portrait */}
+        <ImageUpload value={data.portraitUrl || ""} path="portfolio/about/portrait" label="Portrait image" onChange={(portraitUrl) => setData({ ...data, portraitUrl })} />
         <div>
           <label className="block text-[10px] tracking-[0.2em] uppercase text-white/30 font-mono mb-2">Portrait URL</label>
           <input

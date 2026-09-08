@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { fetchPortfolioData, savePortfolioSection, type PortfolioData } from "@/lib/firebase"
+import { ImageUpload } from "@/components/image-upload"
 
 type Project = PortfolioData["projects"][0]
 
@@ -177,6 +178,8 @@ export default function ProjectsEditor() {
                 />
               </div>
 
+              <ImageUpload value={project.imageUrl} path={`portfolio/projects/${project.id}`} label="Project image" onChange={(imageUrl) => updateProject(project.id, { imageUrl })} />
+
               {/* Map location */}
               <div className="p-4 border border-white/5 rounded-lg bg-white/[0.02]">
                 <label className="block text-[10px] tracking-[0.2em] uppercase text-white/30 font-mono mb-3">Map Location — where this project sits on the realm map</label>
@@ -277,11 +280,11 @@ export default function ProjectsEditor() {
               <div>
                 <label className="block text-[10px] tracking-[0.2em] uppercase text-white/30 font-mono mb-1.5">Languages / Tags</label>
                 <div className="flex flex-wrap gap-2 mb-2">
-                  {project.languages.map((lang, li) => (
+                  {project.languages.map((lang: string, li: number) => (
                     <span key={li} className="flex items-center gap-1.5 px-3 py-1 bg-white/5 border border-white/10 text-white/50 text-xs font-mono rounded">
                       {lang}
                       <button
-                        onClick={() => updateProject(project.id, { languages: project.languages.filter((_, j) => j !== li) })}
+                        onClick={() => updateProject(project.id, { languages: project.languages.filter((_: string, j: number) => j !== li) })}
                         className="text-white/20 hover:text-red-400"
                       >
                         ×
@@ -311,7 +314,7 @@ export default function ProjectsEditor() {
               {/* Highlights */}
               <div>
                 <label className="block text-[10px] tracking-[0.2em] uppercase text-white/30 font-mono mb-1.5">Highlights</label>
-                {project.highlights.map((hl, hi) => (
+                {project.highlights.map((hl: string, hi: number) => (
                   <div key={hi} className="flex gap-2 mb-2">
                     <input
                       value={hl}
@@ -323,7 +326,7 @@ export default function ProjectsEditor() {
                       className="flex-1 px-4 py-2 bg-white/5 border border-white/10 text-white font-mono text-sm focus:border-white/30 focus:outline-none rounded-lg"
                     />
                     <button
-                      onClick={() => updateProject(project.id, { highlights: project.highlights.filter((_, j) => j !== hi) })}
+                      onClick={() => updateProject(project.id, { highlights: project.highlights.filter((_: string, j: number) => j !== hi) })}
                       className="px-3 text-white/20 hover:text-red-400 transition-colors font-mono text-sm"
                     >
                       ×

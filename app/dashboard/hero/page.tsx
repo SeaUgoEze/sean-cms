@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { fetchPortfolioData, savePortfolioSection, type PortfolioData } from "@/lib/firebase"
+import { ImageUpload } from "@/components/image-upload"
 
 export default function HeroEditor() {
   const [data, setData] = useState<PortfolioData["hero"] | null>(null)
@@ -82,6 +83,8 @@ export default function HeroEditor() {
             className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white font-mono text-sm focus:border-white/30 focus:outline-none rounded-lg"
           />
         </div>
+
+        <ImageUpload value={data.backgroundArt || ""} path="portfolio/hero/cover" label="Cover image" onChange={(backgroundArt) => setData({ ...data, backgroundArt })} />
 
         <div>
           <label className="block text-[10px] tracking-[0.2em] uppercase text-white/30 font-mono mb-2">Background Art URL (optional)</label>
