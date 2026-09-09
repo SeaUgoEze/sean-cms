@@ -10,12 +10,12 @@ function emptySkill(): Skill {
     id: Date.now().toString(),
     name: "",
     category: "Languages",
-    icon: "✦",
+    icon: "",
   }
 }
 
 const categories = ["Languages", "Technologies", "Domains", "Tools", "Soft Skills"]
-const icons = ["✦", "◈", "◉", "⊕", "◎", "⬡", "🧠", "🌿", "🌱"]
+const icons = ["", "—", "+", "×", "◇"]
 
 export default function SkillsEditor() {
   const [skills, setSkills] = useState<Skill[]>([])
