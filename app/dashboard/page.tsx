@@ -8,6 +8,7 @@ const sections = [
   { key: "sections", label: "Book Sections", description: "Create chapters and order the pages visitors turn through", href: "/dashboard/sections" },
   { key: "hero", label: "Cover & name", description: "Name, title, and cover artwork", href: "/dashboard/hero" },
   { key: "about", label: "About", description: "Bio and portrait", href: "/dashboard/about" },
+  { key: "resume", label: "Resume", description: "Upload the PDF shown in the book", href: "/dashboard/resume" },
   { key: "projects", label: "Projects", description: "Work, links, and images", href: "/dashboard/projects" },
   { key: "experience", label: "Experience", description: "Work and community experience", href: "/dashboard/experience" },
   { key: "skills", label: "Skills", description: "Tools and practices", href: "/dashboard/skills" },

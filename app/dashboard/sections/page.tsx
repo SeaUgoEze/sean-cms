@@ -12,6 +12,7 @@ const builtIns = [
   { id: "skills", title: "Skills", intro: "Tools and practices I use to move an idea from question to working software." },
   { id: "leadership", title: "Leadership", intro: "Community work that has taught me to listen, organize, and make room for others." },
   { id: "about", title: "About", intro: "A little context behind the person making the work." },
+  { id: "resume", title: "Resume", intro: "A current record of experience, study, and the work I am ready to take on next." },
   { id: "contact", title: "Contact", intro: "For internships, research opportunities, collaborations, and good questions." },
 ]
 

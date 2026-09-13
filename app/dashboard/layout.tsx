@@ -9,6 +9,7 @@ const navItems = [
   { label: "Book Sections", href: "/dashboard/sections" },
   { label: "Hero", href: "/dashboard/hero" },
   { label: "About", href: "/dashboard/about" },
+  { label: "Resume", href: "/dashboard/resume" },
   { label: "Projects", href: "/dashboard/projects" },
   { label: "Experience", href: "/dashboard/experience" },
   { label: "Skills", href: "/dashboard/skills" },

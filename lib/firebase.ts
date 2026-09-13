@@ -67,6 +67,8 @@ export interface PortfolioEntry {
   imageUrl: string
   url: string
   order: number
+  mediaType?: "movie" | "show"
+  rating?: number
 }
 
 export interface PortfolioSection {
@@ -88,10 +90,11 @@ export interface PortfolioData {
   skills: any[]
   leadership: any[]
   contact: any
+  resume: { url: string; fileName: string; updatedAt?: number }
   sections: PortfolioSection[]
 }
 
-const builtInSectionNames = ["projects", "experience", "education", "research", "skills", "leadership", "about", "contact"]
+const builtInSectionNames = ["projects", "experience", "education", "research", "skills", "leadership", "about", "resume", "contact"]
 
 function makeEntry(id: string, title: string, label: string, body: string, tags: string[] = [], url = "", imageUrl = "", order = 0): PortfolioEntry {
   return { id, title, label, body, tags, url, imageUrl, order }
@@ -104,6 +107,7 @@ function legacyBookSections(data: Record<string, any>): PortfolioSection[] {
   const leadership = Array.isArray(data.leadership) ? data.leadership : []
   const about = data.about || {}
   const contact = data.contact || {}
+  const resume = data.resume || {}
   return [
     { id: "projects", title: "Projects", slug: "projects", intro: "Selected work shaped by curiosity, utility, and the discipline of making things clear.", visible: true, order: 1, builtIn: true, entries: projects.map((item: any, index: number) => makeEntry(item.id || `project-${index}`, item.title || "Untitled project", item.category || "Project", item.description || "", item.languages || [], item.githubUrl || "", item.imageUrl || "", index)) },
     { id: "experience", title: "Experience", slug: "experience", intro: "Places where I have learned to work with people, constraints, and responsibility.", visible: true, order: 2, builtIn: true, entries: experience.map((item: any, index: number) => makeEntry(item.id || `experience-${index}`, item.role || "Experience", item.org || "", item.description || "", [item.startDate, item.endDate].filter(Boolean), "", "", index)) },
@@ -112,13 +116,14 @@ function legacyBookSections(data: Record<string, any>): PortfolioSection[] {
     { id: "skills", title: "Skills", slug: "skills", intro: "Tools and practices I use to move an idea from question to working software.", visible: true, order: 5, builtIn: true, entries: skills.map((item: any, index: number) => makeEntry(item.id || `skill-${index}`, item.name || "Skill", item.category || "", `A working part of my toolkit across ${(item.category || "software development").toLowerCase()}.`, [], "", "", index)) },
     { id: "leadership", title: "Leadership", slug: "leadership", intro: "Community work that has taught me to listen, organize, and make room for others.", visible: true, order: 6, builtIn: true, entries: leadership.map((item: any, index: number) => makeEntry(item.id || `leadership-${index}`, item.role || "Leadership", item.org || "", item.description || "", [], "", "", index)) },
     { id: "about", title: "About", slug: "about", intro: "A little context behind the person making the work.", visible: true, order: 7, builtIn: true, entries: (about.paragraphs || []).map((paragraph: string, index: number) => makeEntry(`about-${index}`, index === 0 ? "A short introduction" : `Notes, ${index + 1}`, "About me", paragraph, [], "", index === 0 ? about.portraitUrl || "" : "", index)) },
-    { id: "contact", title: "Contact", slug: "contact", intro: "For internships, research opportunities, collaborations, and good questions.", visible: true, order: 8, builtIn: true, entries: [makeEntry("contact", "Send a message", contact.email || "", "I am always glad to hear from people building useful things. Reach me by email or find my work online.", contact.chips || [], contact.email ? `mailto:${contact.email}` : "")] },
+    { id: "resume", title: "Resume", slug: "resume", intro: "A current record of experience, study, and the work I am ready to take on next.", visible: true, order: 8, builtIn: true, entries: [makeEntry("resume", "Curriculum vitae", resume.fileName || "PDF resume", "", [], resume.url || "")] },
+    { id: "contact", title: "Contact", slug: "contact", intro: "For internships, research opportunities, collaborations, and good questions.", visible: true, order: 9, builtIn: true, entries: [makeEntry("contact", "Send a message", contact.email || "", "I am always glad to hear from people building useful things. Reach me by email or find my work online.", contact.chips || [], contact.email ? `mailto:${contact.email}` : "")] },
   ]
 }
 
 export async function fetchPortfolioData(): Promise<PortfolioData> {
-  const names = ["hero", "about", "projects", "experience", "skills", "leadership", "contact"]
-  const data: Record<string, any> = { hero: {}, about: {}, projects: [], experience: [], skills: [], leadership: [], contact: {}, sections: [] }
+  const names = ["hero", "about", "projects", "experience", "skills", "leadership", "contact", "resume"]
+  const data: Record<string, any> = { hero: {}, about: {}, projects: [], experience: [], skills: [], leadership: [], contact: {}, resume: { url: "", fileName: "" }, sections: [] }
   const snapshots = await Promise.all(names.map((name) => getDoc(doc(db, "portfolio", name))))
   snapshots.forEach((snapshot, index) => {
     if (!snapshot.exists()) return
@@ -128,6 +133,10 @@ export async function fetchPortfolioData(): Promise<PortfolioData> {
   })
   const sectionDoc = await getDoc(doc(db, "portfolio", "sections"))
   data.sections = sectionDoc.exists() && Array.isArray(sectionDoc.data().items) ? sectionDoc.data().items : legacyBookSections(data)
+  const fallbackResume = legacyBookSections(data).find((section) => section.id === "resume")!
+  data.sections = data.sections.some((section: PortfolioSection) => section.id === "resume")
+    ? data.sections.map((section: PortfolioSection) => section.id === "resume" ? { ...section, entries: fallbackResume.entries } : section)
+    : [...data.sections, fallbackResume]
   data.sections = data.sections.map((section: PortfolioSection) => ({ ...section, entries: (section.entries || []).filter((item: PortfolioEntry) => !(section.id === "research" && item.id === "research-interests")) }))
   return data as PortfolioData
 }
@@ -150,11 +159,14 @@ function contactEntries(data: any): PortfolioEntry[] {
 }
 
 async function syncLegacyIntoBook(section: string, data: any) {
-  if (!(section === "projects" || section === "experience" || section === "skills" || section === "leadership" || section === "about" || section === "contact")) return
+  if (!(section === "projects" || section === "experience" || section === "skills" || section === "leadership" || section === "about" || section === "contact" || section === "resume")) return
   const snapshot = await getDoc(doc(db, "portfolio", "sections"))
   if (!snapshot.exists() || !Array.isArray(snapshot.data().items)) return
-  const entries = section === "about" ? aboutEntries(data) : section === "contact" ? contactEntries(data) : toBookEntries(section, data)
-  const items = snapshot.data().items.map((item: PortfolioSection) => item.id === section ? { ...item, entries } : item)
+  const entries = section === "about" ? aboutEntries(data) : section === "contact" ? contactEntries(data) : section === "resume" ? [makeEntry("resume", "Curriculum vitae", data.fileName || "PDF resume", "", [], data.url || "")] : toBookEntries(section, data)
+  const existing = snapshot.data().items as PortfolioSection[]
+  const items = existing.some((item) => item.id === section)
+    ? existing.map((item) => item.id === section ? { ...item, entries } : item)
+    : [...existing, { id: section, title: "Resume", slug: "resume", intro: "A current record of experience, study, and the work I am ready to take on next.", visible: true, order: existing.length + 1, builtIn: true, entries }]
   await setDoc(doc(db, "portfolio", "sections"), { items }, { merge: true })
 }
 
@@ -199,6 +211,25 @@ export async function uploadPortfolioImage(file: File, path: string, onProgress?
 export async function removePortfolioImage(url: string) {
   if (!url || !url.startsWith("https://firebasestorage.googleapis.com/")) return
   await deleteObject(ref(storage, url)).catch(() => undefined)
+}
+
+export async function uploadResume(file: File, onProgress?: (progress: number) => void) {
+  if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) throw new Error("Choose a PDF resume.")
+  if (file.size > 8 * 1024 * 1024) throw new Error("Resume PDFs must be 8 MB or smaller.")
+  const upload = uploadBytesResumable(ref(storage, "portfolio/resume/resume.pdf"), file, { contentType: "application/pdf", cacheControl: "no-cache" })
+  return new Promise<string>((resolve, reject) => {
+    upload.on("state_changed", (snapshot) => onProgress?.(Math.round(snapshot.bytesTransferred / snapshot.totalBytes * 100)), reject, async () => resolve(await getDownloadURL(upload.snapshot.ref)))
+  })
+}
+
+export async function removeResume(url: string) {
+  if (!url || !url.startsWith("https://firebasestorage.googleapis.com/")) return
+  await deleteObject(ref(storage, url)).catch(() => undefined)
+}
+
+export async function saveResume(data: { url: string; fileName: string; updatedAt: number }) {
+  await setDoc(doc(db, "portfolio", "resume"), data, { merge: true })
+  await syncLegacyIntoBook("resume", data)
 }
 
 export { builtInSectionNames }
