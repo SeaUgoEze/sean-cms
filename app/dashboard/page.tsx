@@ -6,6 +6,7 @@ import { fetchPortfolioData, type PortfolioData } from "@/lib/firebase"
 
 const sections = [
   { key: "sections", label: "Book Sections", description: "Create chapters and order the pages visitors turn through", href: "/dashboard/sections" },
+  { key: "typography", label: "Typography", description: "Control every text size in the book", href: "/dashboard/typography" },
   { key: "hero", label: "Cover & name", description: "Name, title, and cover artwork", href: "/dashboard/hero" },
   { key: "about", label: "About", description: "Bio and portrait", href: "/dashboard/about" },
   { key: "resume", label: "Resume", description: "Upload the PDF shown in the book", href: "/dashboard/resume" },

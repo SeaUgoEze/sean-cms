@@ -8,6 +8,7 @@ type Experience = PortfolioData["experience"][0]
 function emptyExperience(): Experience {
   return {
     id: Date.now().toString(),
+    company: "",
     org: "",
     role: "",
     description: "",
@@ -94,10 +95,11 @@ export default function ExperienceEditor() {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] tracking-[0.2em] uppercase text-white/30 font-mono mb-1.5">Organization</label>
+                  <label className="block text-[10px] tracking-[0.2em] uppercase text-white/30 font-mono mb-1.5">Company</label>
                   <input
-                    value={item.org}
-                    onChange={(e) => updateItem(item.id, { org: e.target.value })}
+                    value={item.company || item.org || ""}
+                    onChange={(e) => updateItem(item.id, { company: e.target.value, org: e.target.value })}
+                    placeholder="Where this experience took place"
                     className="w-full px-4 py-2.5 bg-white/5 border border-white/10 text-white font-mono text-sm focus:border-white/30 focus:outline-none rounded-lg"
                   />
                 </div>

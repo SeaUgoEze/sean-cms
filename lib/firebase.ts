@@ -82,6 +82,40 @@ export interface PortfolioSection {
   builtIn?: boolean
 }
 
+export interface TypographySettings {
+  coverName: number
+  coverTitle: number
+  coverSubtitle: number
+  coverHint: number
+  pageHeading: number
+  pageKicker: number
+  body: number
+  label: number
+  tags: number
+  contentsEntry: number
+  metadata: number
+  navigation: number
+  watchlistTitle: number
+  controls: number
+}
+
+export const defaultTypography: TypographySettings = {
+  coverName: 26,
+  coverTitle: 64,
+  coverSubtitle: 13,
+  coverHint: 15,
+  pageHeading: 68,
+  pageKicker: 14,
+  body: 17,
+  label: 17,
+  tags: 14,
+  contentsEntry: 22,
+  metadata: 13,
+  navigation: 15,
+  watchlistTitle: 22,
+  controls: 14,
+}
+
 export interface PortfolioData {
   hero: { name: string; firstName: string; lastName: string; tagline: string; pills: string[]; backgroundArt: string }
   about: { paragraphs: string[]; portraitUrl: string; quote: string }
@@ -91,10 +125,29 @@ export interface PortfolioData {
   leadership: any[]
   contact: any
   resume: { url: string; fileName: string; updatedAt?: number }
+  typography: TypographySettings
   sections: PortfolioSection[]
 }
 
 const builtInSectionNames = ["projects", "experience", "education", "research", "skills", "leadership", "about", "resume", "contact"]
+
+function imageUrl(value: any): string {
+  return value?.imageUrl || value?.imageURL || value?.image || ""
+}
+
+function mergeLegacyImages(sections: PortfolioSection[], fallback: PortfolioSection[]): PortfolioSection[] {
+  return sections.map((section) => {
+    const fallbackSection = fallback.find((item) => item.id === section.id)
+    if (!fallbackSection) return section
+    return {
+      ...section,
+      entries: (section.entries || []).map((entry) => {
+        const fallbackEntry = fallbackSection.entries.find((item) => item.id === entry.id || item.title === entry.title)
+        return { ...entry, imageUrl: imageUrl(entry) || fallbackEntry?.imageUrl || "" }
+      }),
+    }
+  })
+}
 
 function makeEntry(id: string, title: string, label: string, body: string, tags: string[] = [], url = "", imageUrl = "", order = 0): PortfolioEntry {
   return { id, title, label, body, tags, url, imageUrl, order }
@@ -129,24 +182,30 @@ export async function fetchPortfolioData(): Promise<PortfolioData> {
     if (!snapshot.exists()) return
     const name = names[index]
     const value = snapshot.data()
-    data[name] = ["projects", "experience", "skills", "leadership"].includes(name) ? (value.items || []) : value
+    data[name] = ["projects", "experience", "skills", "leadership"].includes(name)
+      ? (value.items || []).map((item: any) => ({ ...item, imageUrl: imageUrl(item), ...(name === "experience" ? { company: item.company || item.org, org: item.company || item.org } : {}) }))
+      : value
   })
   const sectionDoc = await getDoc(doc(db, "portfolio", "sections"))
+  const typographyDoc = await getDoc(doc(db, "portfolio", "typography"))
   data.sections = sectionDoc.exists() && Array.isArray(sectionDoc.data().items) ? sectionDoc.data().items : legacyBookSections(data)
-  const fallbackResume = legacyBookSections(data).find((section) => section.id === "resume")!
+  const fallbackSections = legacyBookSections(data)
+  data.sections = mergeLegacyImages(data.sections, fallbackSections)
+  data.typography = typographyDoc.exists() ? { ...defaultTypography, ...typographyDoc.data() } : defaultTypography
+  const fallbackResume = fallbackSections.find((section) => section.id === "resume")!
   data.sections = data.sections.some((section: PortfolioSection) => section.id === "resume")
     ? data.sections.map((section: PortfolioSection) => section.id === "resume" ? { ...section, entries: fallbackResume.entries } : section)
     : [...data.sections, fallbackResume]
-  data.sections = data.sections.map((section: PortfolioSection) => ({ ...section, entries: (section.entries || []).filter((item: PortfolioEntry) => !(section.id === "research" && item.id === "research-interests")) }))
+  data.sections = data.sections.map((section: PortfolioSection) => ({ ...section, entries: (section.entries || []).map((entry: any) => ({ ...entry, imageUrl: imageUrl(entry) })).filter((item: PortfolioEntry) => !(section.id === "research" && item.id === "research-interests")) }))
   return data as PortfolioData
 }
 
 function toBookEntries(section: string, data: any): PortfolioEntry[] {
   const items = Array.isArray(data?.items) ? data.items : []
-  if (section === "projects") return items.map((item: any, index: number) => ({ id: item.id || `project-${index}`, title: item.title || "Untitled project", label: item.category || "Project", body: item.description || "", tags: item.languages || [], imageUrl: item.imageUrl || "", url: item.githubUrl || "", order: index }))
-  if (section === "experience") return items.map((item: any, index: number) => ({ id: item.id || `experience-${index}`, title: item.role || "Experience", label: item.org || "", body: item.description || "", tags: [item.startDate, item.endDate].filter(Boolean), imageUrl: item.imageUrl || "", url: item.url || "", order: index }))
-  if (section === "skills") return items.map((item: any, index: number) => ({ id: item.id || `skill-${index}`, title: item.name || "Skill", label: item.category || "", body: item.description || `A working part of my toolkit across ${(item.category || "software development").toLowerCase()}.`, tags: [], imageUrl: item.imageUrl || "", url: item.url || "", order: index }))
-  if (section === "leadership") return items.map((item: any, index: number) => ({ id: item.id || `leadership-${index}`, title: item.role || "Leadership", label: item.org || "", body: item.description || "", tags: [], imageUrl: item.imageUrl || "", url: item.url || "", order: index }))
+  if (section === "projects") return items.map((item: any, index: number) => ({ id: item.id || `project-${index}`, title: item.title || "Untitled project", label: item.category || "Project", body: item.description || "", tags: item.languages || [], imageUrl: imageUrl(item), url: item.githubUrl || "", order: index }))
+  if (section === "experience") return items.map((item: any, index: number) => ({ id: item.id || `experience-${index}`, title: item.role || "Experience", label: item.company || item.org || "", body: item.description || "", tags: [item.startDate, item.endDate].filter(Boolean), imageUrl: imageUrl(item), url: item.url || "", order: index }))
+  if (section === "skills") return items.map((item: any, index: number) => ({ id: item.id || `skill-${index}`, title: item.name || "Skill", label: item.category || "", body: item.description || `A working part of my toolkit across ${(item.category || "software development").toLowerCase()}.`, tags: [], imageUrl: imageUrl(item), url: item.url || "", order: index }))
+  if (section === "leadership") return items.map((item: any, index: number) => ({ id: item.id || `leadership-${index}`, title: item.role || "Leadership", label: item.org || "", body: item.description || "", tags: [], imageUrl: imageUrl(item), url: item.url || "", order: index }))
   return []
 }
 
@@ -175,14 +234,20 @@ async function syncBookIntoLegacy(sections: PortfolioSection[]) {
   const projects = sections.find((section) => section.id === "projects")
   if (projects) writes.push(setDoc(doc(db, "portfolio", "projects"), { items: projects.entries.map((entry) => ({ id: entry.id, title: entry.title, category: entry.label, description: entry.body, languages: entry.tags, imageUrl: entry.imageUrl, videoUrl: "", githubUrl: entry.url, highlights: [] })) }, { merge: true }))
   const experience = sections.find((section) => section.id === "experience")
-  if (experience) writes.push(setDoc(doc(db, "portfolio", "experience"), { items: experience.entries.map((entry) => ({ id: entry.id, org: entry.label, role: entry.title, description: entry.body, startDate: entry.tags[0] || "", endDate: entry.tags[1] || "" })) }, { merge: true }))
+  if (experience) writes.push(setDoc(doc(db, "portfolio", "experience"), { items: experience.entries.map((entry) => ({ id: entry.id, org: entry.label, company: entry.label, role: entry.title, description: entry.body, imageUrl: entry.imageUrl || "", startDate: entry.tags[0] || "", endDate: entry.tags[1] || "" })) }, { merge: true }))
   const skills = sections.find((section) => section.id === "skills")
   if (skills) writes.push(setDoc(doc(db, "portfolio", "skills"), { items: skills.entries.map((entry) => ({ id: entry.id, name: entry.title, category: entry.label, icon: "" })) }, { merge: true }))
   const leadership = sections.find((section) => section.id === "leadership")
   if (leadership) writes.push(setDoc(doc(db, "portfolio", "leadership"), { items: leadership.entries.map((entry) => ({ id: entry.id, org: entry.label, role: entry.title, description: entry.body })) }, { merge: true }))
   const about = sections.find((section) => section.id === "about")
   if (about) writes.push(setDoc(doc(db, "portfolio", "about"), { paragraphs: about.entries.map((entry) => entry.body), portraitUrl: about.entries[0]?.imageUrl || "" }, { merge: true }))
+  const hero = sections.find((section) => section.id === "hero")
+  if (hero) writes.push(setDoc(doc(db, "portfolio", "hero"), { backgroundArt: hero.entries[0]?.imageUrl || "" }, { merge: true }))
   await Promise.all(writes)
+}
+
+export async function saveTypographySettings(settings: TypographySettings) {
+  await setDoc(doc(db, "portfolio", "typography"), { ...defaultTypography, ...settings }, { merge: true })
 }
 
 export async function savePortfolioSection(section: string, data: any) {
